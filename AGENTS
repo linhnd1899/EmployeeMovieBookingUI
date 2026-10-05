@@ -1,0 +1,119 @@
+# AGENTS.md — Employee Movie Booking UI
+
+Employee-facing movie ticket booking frontend. The running app is still the Vite + React starter. Feature folders under `src/` are empty.
+
+UI should follow the TailAdmin dashboard in `../free-react-tailwind-admin-dashboard-main`. Copy and adapt pieces from there. Do not invent a second component style, and do not assume those files already exist in this repo.
+
+Companion API (separate repo, also early): `../employee-movie-booking-api`.
+
+## Repo Map
+
+```
+index.html                     # mounts #root, loads src/main.tsx
+vite.config.ts                 # Vite + @vitejs/plugin-react only
+eslint.config.js               # flat ESLint config
+tsconfig.json                  # project references
+tsconfig.app.json              # app compiler options (include: src)
+tsconfig.node.json             # Vite config compiler options
+src/
+├── main.tsx                   # entry: StrictMode + createRoot
+├── App.tsx                    # root component; will hold <Routes> once routing exists
+├── App.css                    # starter styles — drop once Tailwind is wired
+├── index.css                  # starter CSS — replace with the template theme
+├── vite-env.d.ts
+├── assets/
+├── app/                       # providers (theme, sidebar, language) once ported
+├── pages/                     # route screens
+├── layout/                    # AppLayout, AppSidebar, AppHeader, Backdrop
+├── components/                # ui/, form/, common/, header/, and feature folders
+├── hooks/                     # useModal, useGoBack, useClickOutside
+├── services/                  # API clients
+├── configs/
+├── types/
+├── utils/
+├── locales/                   # start with en/common.json, matching the template
+└── icons/                     # add when the first SVG icon is ported
+public/
+```
+
+Files named `* copy.*` (and `.eslintrc.cjs`, `Dockerfile`, `nginx.conf`, `env.sh`) are leftovers from an older Chakra/Redux template. Ignore them.
+
+## Stack
+
+Installed today:
+
+- **React 19** and **react-dom** only, at runtime.
+- **TypeScript ~6.0** (`verbatimModuleSyntax`, `noUnusedLocals`, `noUnusedParameters`, `erasableSyntaxOnly`). **Vite 8** with `@vitejs/plugin-react`.
+- **ESLint 10** flat config. **Prettier**: no semicolons, omit parens on single-argument arrows.
+- **Tailwind CSS v4** (`tailwindcss`, `@tailwindcss/vite`) is installed and **not wired**. `vite.config.ts` has no Tailwind plugin. `src/index.css` is plain CSS. `tailwind.config.js` is a leftover v3 stub — delete it when Tailwind is turned on. Do not extend it.
+- No router, i18n, icons plugin, or chart library yet. No `@/*` path alias. Imports are relative until the alias is added to both `tsconfig.app.json` and `vite.config.ts`.
+- Scripts: `npm run dev`, `npm run build` (`tsc -b && vite build`), `npm run lint`, `npm run preview`.
+- Node >= 20.19.0 or >= 22.12.0.
+
+Bring template dependencies in only when a ported component needs them (`react-router`, `react-i18next`, `react-helmet-async`, `vite-plugin-svgr`, `clsx`, `tailwind-merge`, and chart/calendar/carousel packages). Ask before installing.
+
+## Dashboard template to follow
+
+Source: `../free-react-tailwind-admin-dashboard-main`.
+
+Port structure, not the demo catalog. This app does not need the template's ecommerce, chart, map, or UI-element demo pages. It does use the same shell and primitives:
+
+- **Layout**: `AppLayout` (sidebar + header), `AppSidebar`, `AppHeader`, `Backdrop`. Auth and error pages stay outside that shell.
+- **Primitives**: `src/components/ui/` (alert, avatar, badge, button, dropdown, modal, table) and `src/components/form/`.
+- **Shared widgets**: `src/components/common/` — `PageMeta`, `PageBreadCrumb`, `ComponentCard`, `ThemeToggleButton`, `ScrollToTop`.
+- **State**: `ThemeContext`, `SidebarContext`, `LanguageContext`, consumed through `useTheme`, `useSidebar`, `useLanguage`.
+- **Hooks**: `useModal` (`isOpen`, `openModal`, `closeModal`, `toggleModal`), `useGoBack`, `useClickOutside`.
+- **Icons**: SVGs in `src/icons/`, named PascalCase exports from `src/icons/index.ts`, imported from `@/icons` once the alias and `vite-plugin-svgr` exist. Do not inline SVG markup.
+- **Locales**: the free template ships `en` only (`src/locales/en/common.json`, namespace `"common"`). Add `ar`, `es`, and `de` only if this app needs them. Keys are grouped by feature (`t("booking.showtimes")`). Switch language with `useLanguage().setLanguage`.
+
+When a screen needs a template component, copy that component and the pieces it imports. Match its props and class names. Do not reimplement a button, modal, table, or sidebar that the template already has.
+
+## Routing
+
+Once `react-router` is added, register every route in `src/App.tsx` with `<Routes>` / `<Route>`.
+
+- Dashboard screens render inside `<AppLayout>`.
+- Sign-in and error pages render with no shell.
+- New page: `src/pages/<Category>/MyPage.tsx`, PascalCase, default export, then a `<Route>` in `App.tsx`.
+- Route-only pieces stay in the page folder. Reusable UI goes in `src/components/<feature>/`.
+
+## Conventions
+
+- Function components, default export, explicit prop types.
+- Formatting: no semicolons, single quotes. Type-only imports use `import type`.
+- One feature, one folder. Split a page into focused components instead of one large file.
+- Prefer `src/components/ui/` and `src/components/form/` over raw HTML or a new library.
+- Admin pages start with `<PageMeta title="…" description="…" />`, then `<PageBreadCrumb pageTitle="…" />`, once those components are ported.
+- Modals use `useModal` and `<Modal>` from `src/components/ui/modal/`.
+- Do not add a new context provider unless several distant screens share that state.
+- HTTP calls belong in `src/services/`. Shared types belong in `src/types/`.
+
+## Styling
+
+Tailwind v4 is the styling system, configured in `src/index.css` the way the template does it: `@import "tailwindcss"`, `@theme`, and `@custom-variant dark (&:is(.dark *))`. Never add a `tailwind.config.js` or `tailwind.config.ts`.
+
+Until `@tailwindcss/vite` is registered and `index.css` imports Tailwind, utility classes will not generate. Wire that up before writing new screens. The template's `src/index.css` is the token source. Copy the `@theme` block rather than inventing colors.
+
+Use the template tokens:
+
+- **Colors**: `brand`, `gray`, `blue-light`, `orange`, `success`, `error`, `warning` (`25`–`950`).
+- **Type**: `font-outfit`, `text-theme-xs/sm/xl`, `text-title-sm/md/lg/xl/2xl`.
+- **Shadows**: `shadow-theme-xs/sm/md/lg/xl`, `shadow-focus-ring`, `shadow-tooltip`.
+- **Breakpoints**: `2xsm` (375px), `xsm` (425px), `3xl` (2000px), plus the defaults.
+- **Z-index**: `z-1`, `z-9`, `z-99`, `z-999`, `z-9999`, `z-99999`, `z-999999`.
+
+Dark mode is class-based. `ThemeContext` toggles `.dark` on `<html>`. Every styled element includes its `dark:` variant.
+
+Use logical direction utilities so RTL keeps working: `ms-*`/`me-*`, `ps-*`/`pe-*`, `start-*`/`end-*`, `border-s-*`/`border-e-*`, `rounded-s-*`/`rounded-e-*`, `text-start`/`text-end`. Flip directional icons with `rtl:rotate-180` or `rtl:-scale-x-100`. Reuse template `@utility` classes (`menu-item`, `menu-item-active`, `custom-scrollbar`, `no-scrollbar`) before adding new ones.
+
+No hex colors in `className`. No CSS-in-JS or CSS Modules.
+
+## Don'ts
+
+- Don't install packages unless a ported component needs them, and ask first.
+- Don't build a parallel design system. Copy from `../free-react-tailwind-admin-dashboard-main`.
+- Don't treat Pro-only areas (AI pages, email, task kanban, four locales, `AlternativeLayout`) as part of the free template.
+- Don't grow `tailwind.config.js`. Delete it when Tailwind is wired through `src/index.css`.
+- Don't hardcode user-facing strings once `src/locales/en/common.json` exists — add a key and use `t()`.
+- Don't put new screens in `src/App.tsx` beyond the route table.
+- Don't edit `* copy.*` files.
